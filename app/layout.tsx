@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import '@fontsource/inter/400.css';
+import {ContentProvider} from './content';
 import {PageShell} from './ui';
 import {assetPath,basePath,siteOrigin} from './paths';
 export const metadata: Metadata = {
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
  icons:{icon:assetPath('/images/hero-final.png')},
 };
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
- return <html lang="en"><body><PageShell>{children}</PageShell></body></html>;
+ return <html lang="en"><body><ContentProvider><PageShell>{children}</PageShell></ContentProvider></body></html>;
 }

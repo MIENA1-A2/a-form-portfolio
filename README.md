@@ -4,6 +4,8 @@
 
 ## GitHub Pages
 
+在线编辑器： https://miena1-a2.github.io/a-form-portfolio/studio/ 。安全登录与首次配置见 [EDITOR-SETUP.md](EDITOR-SETUP.md)。网站内容集中在 `app/site-content.json`，编辑器提交后触发同一发布流程。
+
 发布地址：https://miena1-a2.github.io/a-form-portfolio/
 
 仓库 Settings → Pages → Source 选择 GitHub Actions。推送 main 后自动测试、构建并发布。使用 `npm ci` 与 `npm run build:pages` 可在本地生成相同的 `out/` 静态文件。五个页面均预渲染，支持直接访问项目地址；无效地址使用 404 页面。生产站点基路径、图片路径与分享元数据已配置在 `next.config.ts` 和 `app/paths.ts`。

@@ -24,8 +24,9 @@ test("route defines project-specific metadata and not-found handling",async()=>{
  assert.match(source,/generateMetadata/);
  assert.match(source,/if\(!project\)notFound\(\)/);
  assert.ok(source.includes("images:[assetPath(p.image)]"));
- assert.match(source,/variant=\{1\}/);
- assert.match(source,/variant=\{2\}/);
+ const detail=await readFile(root+"app/project-detail.tsx","utf8");
+ assert.match(detail,/variant=\{1\}/);
+ assert.match(detail,/variant=\{2\}/);
 });
 test("local-only binding and responsive/reduced-motion safeguards are retained",async()=>{
  const config=await readFile(root+"vite.config.ts","utf8");

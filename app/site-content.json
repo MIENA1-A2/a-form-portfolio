@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "text": {
+    "heroLine1": "INDEPENDENT", "heroLine2": "DESIGNER",
+    "heroNote": "VISUAL IDENTITIES.\nUNEXPECTED PERSPECTIVES.",
+    "heroCaption": "FORM IS A LANGUAGE.\nLET’S MAKE IT SAY SOMETHING.",
+    "worksIntro": "Independent explorations at the intersection\nof culture, material and visual systems.",
+    "aboutHeading": "I CREATE\nVISUAL SYSTEMS\nFOR BRANDS\nAND CULTURE.",
+    "aboutBody": "An independent design practice exploring the space between clear systems and unexpected expression.",
+    "aboutSecond": "From the first question to the final detail, I build identities that feel considered, distinctive and alive.",
+    "contactHeading": "LET’S CREATE\nSOMETHING",
+    "contactBody": "This is a concept portfolio.\nContact channels will be added with the real designer’s details."
+  },
+  "design": {"blue":"#173bff","paper":"#f2f2f0","lime":"#c5ef63","headingScale":1,"tracking":-0.065,"lineHeight":0.9,"spacing":1,"bodySize":14},
+  "motion": {"enabled":true,"duration":0.85,"distance":30,"hoverScale":1.02,"parallax":1},
+  "projects": {}
+}
