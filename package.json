@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node --test scripts/validate.mjs scripts/studio.test.mjs scripts/visual-studio.test.mjs",
+    "test": "node --test scripts/validate.mjs scripts/studio.test.mjs scripts/visual-studio.test.mjs scripts/cloud-sync.test.mjs",
     "start": "vinext start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },

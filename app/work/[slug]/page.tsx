@@ -2,6 +2,7 @@ import type {Metadata} from "next";
 import {notFound} from "next/navigation";
 import {getProject,projects} from "../../data";
 import ProjectDetail from "../../project-detail";
+import Published from '../../studio-next/published';
 import saved from "../../site-content.json";
 import {assetPath,basePath,siteOrigin} from "../../paths";
 type Props={params:Promise<{slug:string}>};
@@ -15,5 +16,5 @@ export async function generateMetadata({params}:Props):Promise<Metadata>{
 
 export default async function ProjectPage({params}:Props){
  const project=getProject((await params).slug);if(!project)notFound();
- return <ProjectDetail slug={project.slug}/>;
+ return <Published pageId={project.slug}><ProjectDetail slug={project.slug}/></Published>;
 }

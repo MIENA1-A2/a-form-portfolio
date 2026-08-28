@@ -1,12 +1,14 @@
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "aform-studio-api",
-  "main": "index.ts",
+  "main": "entry.ts",
   "account_id": "396286e228308e891db8d7a21d67bbce",
   "compatibility_date": "2026-08-27",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "observability": {"enabled": true,"head_sampling_rate": 0.1},
   "vars": {"EDITOR_ORIGIN":"https://miena1-a2.github.io","API_ORIGIN":"https://aform-studio-api.2975166565.workers.dev","ALLOWED_USER_ID":"306061934"},
-  "kv_namespaces": [{"binding":"STORE","id":"ab11b6722be04b0f93fa64cf3088df1a"}]
+  "kv_namespaces": [{"binding":"STORE","id":"ab11b6722be04b0f93fa64cf3088df1a"}],
+  "durable_objects": {"bindings":[{"name":"VISUAL","class_name":"VisualStore"}]},
+  "migrations": [{"tag":"visual-v1","new_sqlite_classes":["VisualStore"]}]
 }

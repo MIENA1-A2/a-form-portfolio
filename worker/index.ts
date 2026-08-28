@@ -28,6 +28,7 @@ function cookie(req:Request,name:string){return req.headers.get('Cookie')?.split
 function secureCookie(value:string,age:number){return `__Host-aform-state=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;}
 async function handle(req:Request,env:Env):Promise<Response>{
  const url=new URL(req.url),origin=req.headers.get('Origin');
+ if(url.pathname==='/v2/published'&&req.method==='GET')return Response.json(await env.VISUAL.getByName(env.ALLOWED_USER_ID).published());
  if(url.pathname==='/health')return Response.json({ready:!!(env.GITHUB_CLIENT_ID&&env.GITHUB_CLIENT_SECRET&&env.SESSION_KEY)});
  if(!env.GITHUB_CLIENT_ID||!env.GITHUB_CLIENT_SECRET||!env.SESSION_KEY)throw new HttpError(503,'安全登录尚未配置，请完成 GitHub OAuth 应用设置。');
  if(url.pathname==='/auth/start'&&req.method==='GET'){
@@ -56,6 +57,17 @@ async function handle(req:Request,env:Env):Promise<Response>{
  if(url.pathname==='/logout'&&req.method==='POST'){await env.STORE.delete(sessionKey);return Response.json({ok:true});}
  // Check the GitHub identity on every content/draft/publish request, not just in the UI.
  await owner(auth.token,env);
+ if(url.pathname==='/v2/state'&&req.method==='GET')return Response.json(await env.VISUAL.getByName(env.ALLOWED_USER_ID).state());
+ if(['/v2/save','/v2/unpublish'].includes(url.pathname)&&req.method==='POST'){
+  if(!req.headers.get('Content-Type')?.startsWith('application/json'))throw new HttpError(415,'需要 JSON 请求');
+  const data=await boundedJson(req,17000000);
+  if(!object(data)||!Number.isSafeInteger(data.baseRevision)||Number(data.baseRevision)<0)throw new HttpError(400,'版本号无效');
+  const store=env.VISUAL.getByName(env.ALLOWED_USER_ID);
+  if(url.pathname==='/v2/save'&&typeof data.publish!=='boolean')throw new HttpError(400,'发布选项无效');
+  const result=url.pathname==='/v2/unpublish'?await store.unpublish(Number(data.baseRevision)):await store.save(JSON.stringify(data.document??null),Number(data.baseRevision),data.publish===true);
+  if(result.error)throw new HttpError(result.status??500,result.error);
+  return Response.json(result);
+ }
  if(url.pathname==='/content'&&req.method==='GET')return Response.json(await readContent(auth.token));
  if(url.pathname==='/draft'&&req.method==='GET'){const draft=await env.STORE.get('draft:'+env.ALLOWED_USER_ID);return Response.json(draft?await unseal(draft,env):null);}
  if(req.method==='POST'&&['/draft','/publish'].includes(url.pathname)){
