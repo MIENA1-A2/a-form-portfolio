@@ -1,0 +1,18 @@
+'use client';
+import type {MotionSpec,ModelSpec} from './document';
+import {cleanSurface,surfacePresets,modelPresets,type Surface,type Reveal} from './effects';
+import './effects.css';
+
+function NumberControl({label,value,min,max,step=1,onChange}:{label:string;value:number;min:number;max:number;step?:number;onChange:(value:number)=>void}){
+ return <label>{label}<input key={value} aria-label={label} type="number" defaultValue={value} min={min} max={max} step={step} onBlur={e=>{const n=Number(e.target.value);if(Number.isFinite(n)&&e.target.value!=='')onChange(Math.max(min,Math.min(max,n)));else e.target.value=String(value)}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur()}}/></label>;
+}
+export function RevealControls({value,onChange,onReplay}:{value:MotionSpec;onChange:(value:MotionSpec)=>void;onReplay:()=>void}){
+ return <><h3 className="v2-effects-title">文字出现预设</h3><label>出现方式<select value={value.reveal??'fade'} onChange={e=>onChange({...value,reveal:e.target.value as Reveal,enter:true})}><option value="fade">基础淡入</option><option value="block-wipe">色块铺开 → 擦除露字</option><option value="line-rise">逐行切入</option></select></label>{value.reveal&&value.reveal!=='fade'&&<><NumberControl label="行间错开 / 秒" value={value.stagger??.1} min={0} max={.5} step={.025} onChange={stagger=>onChange({...value,stagger})}/>{value.reveal==='block-wipe'&&<><label>遮罩颜色<input type="color" value={value.coverColor??'#000000'} onChange={e=>onChange({...value,coverColor:e.target.value})}/></label><label>擦开方向<select value={value.direction??'left'} onChange={e=>onChange({...value,direction:e.target.value as 'left'|'right'})}><option value="left">从左到右</option><option value="right">从右到左</option></select></label></>}<p className="v2-effects-help">按手动换行分组；自动折行作为同组出现。时长与延迟沿用下方动效设置。编辑时保持可见。</p></>}<div className="v2-row"><button onClick={onReplay}>预览此页动效 ↻</button><button onClick={()=>onChange({...value,reveal:'fade',stagger:.1,direction:'left',coverColor:'#000000'})}>恢复基础</button></div></>;
+}
+export function SurfaceControls({value,onChange,image=false}:{value?:Surface;onChange:(value:Surface)=>void;image?:boolean}){
+ const s=value??cleanSurface;
+ return <><h3 className="v2-effects-title">工业材质</h3><div className="v2-preset-grid">{([['none','无材质'],['painted','喷漆外壳'],['rubber','黑色软胶'],['metal','拉丝金属']] as const).map(([kind,label])=><button key={kind} aria-pressed={s.kind===kind} onClick={()=>onChange({...surfacePresets[kind]})}>{label}</button>)}</div>{s.kind!=='none'&&<><label>材质底色<input type="color" value={s.color} onChange={e=>onChange({...s,color:e.target.value})}/></label><NumberControl label="高光强度" value={s.strength} min={0} max={1} step={.05} onChange={strength=>onChange({...s,strength})}/><NumberControl label="颗粒强度" value={s.grain} min={0} max={1} step={.05} onChange={grain=>onChange({...s,grain})}/><NumberControl label="包边厚度" value={s.bevel} min={0} max={40} onChange={bevel=>onChange({...s,bevel})}/><label>角部铆钉<input type="checkbox" checked={s.bolts} onChange={e=>onChange({...s,bolts:e.target.checked})}/></label><label>切角轮廓<input type="checkbox" checked={s.cut} onChange={e=>onChange({...s,cut:e.target.checked})}/></label><p className="v2-effects-help">{image?'图片保留原图，仅叠加包边、颗粒与铆钉。':'这是二维面板的视觉材质，不会改变 3D 模型。'}切角只作用于材质底板。</p></>}</>;
+}
+export function ModelMaterialControls({value,onChange}:{value:ModelSpec;onChange:(value:ModelSpec)=>void}){
+ return <><h3 className="v2-effects-title">3D 材质快捷预设</h3><div className="v2-preset-grid">{([['painted','喷漆'],['rubber','橡胶'],['metal','金属']] as const).map(([kind,label])=><button key={kind} onClick={()=>onChange({...value,...modelPresets[kind]})}>{label}</button>)}</div><p className="v2-effects-help">仅修改材质，不改 SVG、厚度或旋转。需要 WebGL 才能看到实时效果；静态替代图不会随材质变化。</p></>;
+}

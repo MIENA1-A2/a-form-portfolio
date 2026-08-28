@@ -1,12 +1,13 @@
 import { projects } from '../data';
 import saved from '../site-content.json';
+import {validReveal,validSurface,type RevealOptions,type Surface} from './effects';
 
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
 export type Box = { x:number;y:number;width:number;height:number;fontSize:number;lineHeight:number;tracking:number;rotation:number;opacity:number;radius:number;color:string;background:string;align:'left'|'center'|'right';fit:'cover'|'contain';focalX:number;focalY:number };
-export type MotionSpec = { enter:boolean;distance:number;duration:number;delay:number;hover:number };
+export type MotionSpec = RevealOptions & { enter:boolean;distance:number;duration:number;delay:number;hover:number };
 export type ModelSpec = { svg:string;depth:number;bevel:number;metalness:number;roughness:number;transmission:number;ior:number;clearcoat:number;color:string;rotate:boolean;pointer:number };
-export type Layer = { id:string;name:string;type:'text'|'image'|'model';text:string;src:string;alt:string;hidden:boolean;locked:boolean;box:Box;overrides:Partial<Record<Breakpoint,Partial<Box>>>;motion:MotionSpec;model:ModelSpec };
-export type Section = { id:string;name:string;height:number;background:string;backgroundMode?:'solid'|'gradient';layout:'free'|'row'|'column';gap:number;padding:number;children:Layer[] };
+export type Layer = { id:string;name:string;type:'text'|'image'|'model';text:string;src:string;alt:string;hidden:boolean;locked:boolean;box:Box;overrides:Partial<Record<Breakpoint,Partial<Box>>>;motion:MotionSpec;model:ModelSpec;surface?:Surface };
+export type Section = { id:string;name:string;height:number;background:string;backgroundMode?:'solid'|'gradient';layout:'free'|'row'|'column';gap:number;padding:number;children:Layer[];surface?:Surface };
 export type Page = { id:string;name:string;sections:Section[] };
 export type Document = { version:2;pages:Page[] };
 export const widths:Record<Breakpoint,number>={desktop:1440,tablet:768,mobile:390};
@@ -73,8 +74,8 @@ export function validDocument(value:unknown):value is Document{
  const id=(v:unknown)=>{if(typeof v!=='string'||!/^[-a-zA-Z0-9_]{1,80}$/.test(v)||ids.has(v))return false;ids.add(v);return true;};
  const short=(v:unknown,max=200)=>typeof v==='string'&&v.length<=max;
  return value.pages.every(p=>record(p)&&id(p.id)&&short(p.name)&&Array.isArray(p.sections)&&p.sections.length>0&&p.sections.length<=40&&p.sections.every(s=>{
-  if(!record(s)||!id(s.id)||!short(s.name)||!color(s.background)||!['free','row','column'].includes(String(s.layout))||!Array.isArray(s.children)||typeof s.height!=='number'||s.height<100||s.height>10000||typeof s.gap!=='number'||s.gap<0||s.gap>300||typeof s.padding!=='number'||s.padding<0||s.padding>300)return false;
-  return s.children.every(l=>{if(++total>500||!record(l)||!id(l.id)||!short(l.name)||!['text','image','model'].includes(String(l.type))||!short(l.text,10000)||!safeSource(l.src)||!short(l.alt,2000)||typeof l.hidden!=='boolean'||typeof l.locked!=='boolean'||!validBox(l.box)||!record(l.overrides)||!Object.entries(l.overrides).every(([k,v])=>['desktop','tablet','mobile'].includes(k)&&validBox(v,true))||!record(l.motion)||!record(l.model))return false;
+  if(!record(s)||!validSurface(s.surface)||!id(s.id)||!short(s.name)||!color(s.background)||!['free','row','column'].includes(String(s.layout))||!Array.isArray(s.children)||typeof s.height!=='number'||s.height<100||s.height>10000||typeof s.gap!=='number'||s.gap<0||s.gap>300||typeof s.padding!=='number'||s.padding<0||s.padding>300)return false;
+  return s.children.every(l=>{if(++total>500||!record(l)||!id(l.id)||!short(l.name)||!['text','image','model'].includes(String(l.type))||!short(l.text,10000)||!safeSource(l.src)||!short(l.alt,2000)||typeof l.hidden!=='boolean'||typeof l.locked!=='boolean'||!validBox(l.box)||!record(l.overrides)||!Object.entries(l.overrides).every(([k,v])=>['desktop','tablet','mobile'].includes(k)&&validBox(v,true))||!record(l.motion)||!validReveal(l.motion)||!validSurface(l.surface)||!record(l.model))return false;
    const m=l.motion,model=l.model;
    return typeof m.enter==='boolean'&&typeof m.distance==='number'&&m.distance>=0&&m.distance<=100&&typeof m.duration==='number'&&m.duration>=.1&&m.duration<=5&&typeof m.delay==='number'&&m.delay>=0&&m.delay<=5&&typeof m.hover==='number'&&m.hover>=1&&m.hover<=1.2&&short(model.svg,100000)&&!/<(?:script|foreignObject|image|use|text|filter|mask)\b|\bon\w+\s*=|(?:href|url)\s*[=(]|<!DOCTYPE|<!ENTITY/i.test(String(model.svg))&&color(model.color)&&typeof model.rotate==='boolean'&&Object.entries({depth:[1,100],bevel:[0,20],metalness:[0,1],roughness:[0,1],transmission:[0,1],ior:[1,2.5],clearcoat:[0,1],pointer:[0,10]}).every(([k,[min,max]])=>typeof model[k]==='number'&&Number.isFinite(model[k])&&(model[k] as number)>=min&&(model[k] as number)<=max);
   });

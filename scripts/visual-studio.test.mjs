@@ -9,6 +9,27 @@ function moduleAt(path,dependencies={}){
  const exports={};vm.runInNewContext(code,{exports,require:name=>{assert.ok(name in dependencies,'Unexpected dependency '+name);return dependencies[name]},console});return exports;
 }
 const data=moduleAt('../app/data.ts');
+const effects=moduleAt('../app/studio-next/effects.ts');
+test('all material and reveal presets round-trip while old documents remain valid',()=>{
+ for(const surface of Object.values(effects.surfacePresets)){
+  const doc=migrate();doc.pages[0].sections[0].surface=surface;doc.pages[0].sections[0].children[0].surface=surface;
+  doc.pages[0].sections[0].children[0].motion={enter:true,distance:30,duration:.85,delay:0,hover:1.02,reveal:'block-wipe',stagger:.1,coverColor:'#000000',direction:'right'};
+  assert.ok(validDocument(JSON.parse(JSON.stringify(doc))));
+ }
+ for(const preset of Object.values(effects.modelPresets)){
+  const doc=migrate(),model=doc.pages[0].sections[0].children[2];model.model={...model.model,...preset};assert.ok(validDocument(doc));
+ }
+ assert.ok(validDocument(migrate()));
+});
+test('effect validation rejects arbitrary CSS, URLs and unbounded timing',()=>{
+ for(const mutate of [l=>l.surface={...effects.cleanSurface,color:'url(https://evil.test)'},l=>l.surface={...effects.cleanSurface,grain:Infinity},l=>l.surface={...effects.cleanSurface,bevel:100},l=>l.motion.reveal='javascript:alert(1)',l=>l.motion.stagger=5,l=>l.motion.coverColor='red;display:none',l=>l.motion.direction='up']){
+  const doc=migrate();mutate(doc.pages[0].sections[0].children[0]);assert.equal(validDocument(doc),false);
+ }
+});
+test('manual reveal lines preserve blank lines and cap total stagger',()=>{
+ assert.equal(JSON.stringify(effects.revealLines('ONE\r\n\nTWO')),JSON.stringify(['ONE','','TWO']));
+ assert.equal(effects.lineDelay(1000,.5),2);assert.equal(effects.lineDelay(2,.1),.2);
+});
 const {connectLiveTarget,syncPlainText}=moduleAt('../app/studio-next/lifecycle.ts');
 test('late canvas initialization ignores null and detached event targets',()=>{
  const connected=[];const connect=target=>connected.push(target);
@@ -23,7 +44,7 @@ test('plain-text synchronization replaces externally modified text without child
  syncPlainText(unchanged,'same');assert.equal(writes,0);
 });
 const content=JSON.parse(readFileSync(new URL('../app/site-content.json',import.meta.url),'utf8'));
-const {migrate,validDocument,patchBox,boxAt,updateLayer}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content});
+const {migrate,validDocument,patchBox,boxAt,updateLayer}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content,'./effects':effects});
 test('migrates five pages with stable, unique nodes and a valid schema',()=>{
  const doc=migrate();assert.ok(validDocument(doc));assert.equal(doc.pages.length,5);assert.equal(JSON.stringify(doc),JSON.stringify(migrate()));assert.equal(doc.pages[0].sections[0].children[1].text,content.text.heroLine1);
 });
