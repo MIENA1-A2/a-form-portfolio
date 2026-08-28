@@ -1,6 +1,6 @@
 'use client';
 /* eslint-disable react-hooks/immutability -- Three objects are mutated only in the render loop. */
-import {Canvas,useFrame,useThree} from '@react-three/fiber';
+import {Canvas,events,useFrame,useThree,type RootState} from '@react-three/fiber';
 import {Component,useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {useInView,useReducedMotion} from 'motion/react';
 import {ExtrudeGeometry,TorusKnotGeometry,PMREMGenerator,MathUtils,type Mesh} from 'three';
@@ -9,6 +9,18 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {sanitizeSvg} from './assets';
 import type {ModelSpec} from './document';
 import {assetPath} from '../paths';
+import {connectLiveTarget} from './lifecycle';
+
+function safeEvents(store:Parameters<typeof events>[0]){
+ const manager=events(store),connect=manager.connect;
+ return {...manager,connect:(target:HTMLElement|null)=>connectLiveTarget(target,node=>connect?.(node))};
+}
+
+function ContextLoss({onFailure}:{onFailure:()=>void}){
+ const canvas=useThree((state:RootState)=>state.gl.domElement);
+ useEffect(()=>{canvas.addEventListener('webglcontextlost',onFailure);return()=>canvas.removeEventListener('webglcontextlost',onFailure)},[canvas,onFailure]);
+ return null;
+}
 
 function Shape({spec,reduced}:{spec:ModelSpec;reduced:boolean}){
  const mesh=useRef<Mesh>(null),{gl,scene,invalidate}=useThree();
@@ -26,8 +38,9 @@ function Shape({spec,reduced}:{spec:ModelSpec;reduced:boolean}){
 }
 class Boundary extends Component<{children:ReactNode;fallback:ReactNode},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true}}render(){return this.state.failed?this.props.fallback:this.props.children}}
 export default function Model({spec,src,mobile}:{spec:ModelSpec;src:string;mobile:boolean}){
- const host=useRef<HTMLDivElement>(null),inView=useInView(host),reduced=useReducedMotion();const [ready,setReady]=useState(false),[visible,setVisible]=useState(true),[failed,setFailed]=useState(false);
+ // Fiber's eventSource type assumes a mounted ref; safeEvents guards its null teardown state.
+ const host=useRef<HTMLDivElement>(null!),inView=useInView(host),reduced=useReducedMotion();const [ready,setReady]=useState(false),[visible,setVisible]=useState(true),[failed,setFailed]=useState(false);
  useEffect(()=>{const c=document.createElement('canvas');const context=c.getContext('webgl2');const timer=setTimeout(()=>setReady(!!context),0);context?.getExtension('WEBGL_lose_context')?.loseContext();const update=()=>setVisible(!document.hidden);document.addEventListener('visibilitychange',update);return()=>{clearTimeout(timer);document.removeEventListener('visibilitychange',update)}},[]);
  const fallback=<div style={{width:'100%',height:'100%',position:'relative'}}><img src={src.startsWith('/')?assetPath(src):src} alt="模型静态替代图" style={{width:'100%',height:'100%',objectFit:'contain'}}/><span style={{position:'absolute',bottom:8,left:8,color:'#fff',background:'#000b',font:'12px/1.4 Arial',padding:6,letterSpacing:0}}>{mobile?'手机静态替代图':'当前浏览器未启用 3D · 静态替代图'}</span></div>;
- return <div ref={host} style={{width:'100%',height:'100%'}}>{!ready||mobile||failed?fallback:<Boundary key={spec.svg} fallback={fallback}><Canvas camera={{position:[0,0,7],fov:34}} dpr={[1,1.5]} frameloop={!inView||!visible?'never':reduced||(!spec.rotate&&!spec.pointer)?'demand':'always'} gl={{alpha:true,antialias:true,powerPreference:'low-power'}} onCreated={({gl})=>gl.domElement.addEventListener('webglcontextlost',()=>setFailed(true),{once:true})}><Shape spec={spec} reduced={!!reduced}/></Canvas></Boundary>}</div>;
+ return <div ref={host} style={{width:'100%',height:'100%'}}>{!ready||mobile||failed?fallback:<Boundary key={spec.svg} fallback={fallback}><Canvas events={safeEvents} eventSource={host} camera={{position:[0,0,7],fov:34}} dpr={[1,1.5]} frameloop={!inView||!visible?'never':reduced||(!spec.rotate&&!spec.pointer)?'demand':'always'} gl={{alpha:true,antialias:true,powerPreference:'low-power'}}><ContextLoss onFailure={()=>setFailed(true)}/><Shape spec={spec} reduced={!!reduced}/></Canvas></Boundary>}</div>;
 }

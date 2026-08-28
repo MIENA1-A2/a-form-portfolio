@@ -9,6 +9,19 @@ function moduleAt(path,dependencies={}){
  const exports={};vm.runInNewContext(code,{exports,require:name=>{assert.ok(name in dependencies,'Unexpected dependency '+name);return dependencies[name]},console});return exports;
 }
 const data=moduleAt('../app/data.ts');
+const {connectLiveTarget,syncPlainText}=moduleAt('../app/studio-next/lifecycle.ts');
+test('late canvas initialization ignores null and detached event targets',()=>{
+ const connected=[];const connect=target=>connected.push(target);
+ connectLiveTarget(null,connect);connectLiveTarget(undefined,connect);connectLiveTarget({isConnected:false},connect);
+ assert.equal(connected.length,0);
+ const live={isConnected:true};connectLiveTarget(live,connect);assert.equal(connected[0],live);
+});
+test('plain-text synchronization replaces externally modified text without child insertion',()=>{
+ const node={textContent:'browser edited text'};syncPlainText(node,'saved text');assert.equal(node.textContent,'saved text');
+ syncPlainText(node,'');assert.equal(node.textContent,'');
+ let writes=0;const unchanged={get textContent(){return 'same'},set textContent(v){writes++}};
+ syncPlainText(unchanged,'same');assert.equal(writes,0);
+});
 const content=JSON.parse(readFileSync(new URL('../app/site-content.json',import.meta.url),'utf8'));
 const {migrate,validDocument,patchBox,boxAt,updateLayer}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content});
 test('migrates five pages with stable, unique nodes and a valid schema',()=>{
