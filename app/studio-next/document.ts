@@ -3,7 +3,9 @@ import saved from '../site-content.json';
 import {validReveal,validSurface,type RevealOptions,type Surface} from './effects';
 
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
-export type Box = { x:number;y:number;width:number;height:number;fontSize:number;lineHeight:number;tracking:number;rotation:number;opacity:number;radius:number;color:string;background:string;align:'left'|'center'|'right';fit:'cover'|'contain';focalX:number;focalY:number };
+export type Box = { x:number;y:number;width:number;height:number;fontSize:number;fontWeight?:number;fontFamily?:'arial'|'inter';lineHeight:number;tracking:number;rotation:number;opacity:number;radius:number;color:string;background:string;align:'left'|'center'|'right';fit:'cover'|'contain';focalX:number;focalY:number };
+export const fontWeights=[100,200,300,400,500,600,700,800,900] as const;
+export function typographyAt(box:Box){const fontWeight=box.fontWeight??400;return {fontWeight,fontFamily:box.fontFamily==='inter'||![400,700].includes(fontWeight)?'Inter, Arial, sans-serif':'Arial, Helvetica, sans-serif'};}
 export type MotionSpec = RevealOptions & { enter:boolean;distance:number;duration:number;delay:number;hover:number };
 export type ModelSpec = { svg:string;depth:number;bevel:number;metalness:number;roughness:number;transmission:number;ior:number;clearcoat:number;color:string;rotate:boolean;pointer:number };
 export type Layer = { id:string;name:string;type:'text'|'image'|'model';text:string;src:string;alt:string;hidden:boolean;locked:boolean;box:Box;overrides:Partial<Record<Breakpoint,Partial<Box>>>;motion:MotionSpec;model:ModelSpec;surface?:Surface };
@@ -62,8 +64,9 @@ export const safeSource=(v:unknown)=>typeof v==='string'&&(/^\/images\/[a-zA-Z0-
 function validBox(x:unknown,partial=false):boolean{
  if(!record(x))return false;
  const bounds:Record<string,[number,number]>={x:[-5000,10000],y:[-5000,20000],width:[10,5000],height:[10,10000],fontSize:[8,600],lineHeight:[.5,3],tracking:[-.2,1],rotation:[-360,360],opacity:[0,1],radius:[0,1000],focalX:[0,100],focalY:[0,100]};
- if(!partial&&Object.keys(x).length!==Object.keys(defaultBox).length)return false;
- return Object.entries(x).every(([k,v])=>bounds[k]?typeof v==='number'&&Number.isFinite(v)&&v>=bounds[k][0]&&v<=bounds[k][1]:k==='color'||k==='background'?color(v):k==='align'?['left','center','right'].includes(String(v)):k==='fit'?['cover','contain'].includes(String(v)):false);
+ // Typography is optional so documents saved before font controls remain valid.
+ if(!partial&&!Object.keys(defaultBox).every(k=>Object.hasOwn(x,k)))return false;
+ return Object.entries(x).every(([k,v])=>k==='fontWeight'?typeof v==='number'&&fontWeights.some(w=>w===v):k==='fontFamily'?v==='arial'||v==='inter':bounds[k]?typeof v==='number'&&Number.isFinite(v)&&v>=bounds[k][0]&&v<=bounds[k][1]:k==='color'||k==='background'?color(v):k==='align'?['left','center','right'].includes(String(v)):k==='fit'?['cover','contain'].includes(String(v)):false);
 }
 export function validDocument(value:unknown):value is Document{
  if(!record(value)||value.version!==2||!Array.isArray(value.pages)||value.pages.length!==5)return false;

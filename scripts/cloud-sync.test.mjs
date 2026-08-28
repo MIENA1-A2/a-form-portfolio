@@ -26,6 +26,9 @@ test('cloud drafts, atomic conflicts, publication and owner-only access in real 
   let response=await req('/v2/save',{document:doc,baseRevision:0,publish:false});assert.equal(response.status,200);assert.equal((await response.json()).revision,1);
   assert.equal((await (await req('/v2/published',undefined,'')).json()).document,null);
   state=await (await req('/v2/state')).json();assert.deepEqual(state.document,doc);
+  doc.pages[0].sections[0].children[0].box.fontFamily='inter';
+  doc.pages[0].sections[0].children[0].box.fontWeight=200;
+  doc.pages[0].sections[0].children[0].overrides.mobile={fontFamily:'inter',fontWeight:800};
   const write=()=>req('/v2/save',{document:doc,baseRevision:1,publish:true});
   const concurrent=await Promise.all([write(),write()]);assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,409]);
   const publicState=await (await req('/v2/published',undefined,'')).json();assert.equal(publicState.revision,2);assert.deepEqual(publicState.document,doc);
@@ -34,6 +37,8 @@ test('cloud drafts, atomic conflicts, publication and owner-only access in real 
   assert.equal((await (await req('/v2/published',undefined,'')).json()).document.pages[0].sections[0].children[0].text,'PRIVATE DRAFT');
   const invalid=structuredClone(doc);invalid.pages[0].sections[0].children[0].src='https://evil.test';
   assert.equal((await req('/v2/save',{document:invalid,baseRevision:3,publish:true})).status,400);
+  const invalidWeight=structuredClone(doc);invalidWeight.pages[0].sections[0].children[0].box.fontWeight=1000;
+  assert.equal((await req('/v2/save',{document:invalidWeight,baseRevision:3,publish:true})).status,400);
   assert.equal((await req('/v2/unpublish',{baseRevision:2})).status,409);
   assert.equal((await req('/v2/unpublish',{baseRevision:3})).status,200);
   assert.equal((await (await req('/v2/published',undefined,'')).json()).document,null);

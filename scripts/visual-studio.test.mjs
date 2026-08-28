@@ -44,7 +44,30 @@ test('plain-text synchronization replaces externally modified text without child
  syncPlainText(unchanged,'same');assert.equal(writes,0);
 });
 const content=JSON.parse(readFileSync(new URL('../app/site-content.json',import.meta.url),'utf8'));
-const {migrate,validDocument,patchBox,boxAt,updateLayer}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content,'./effects':effects});
+const {migrate,validDocument,patchBox,boxAt,updateLayer,typographyAt,fontWeights}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content,'./effects':effects});
+test('font weights preserve legacy appearance and support all nine real Inter faces',()=>{
+ const doc=migrate(),layer=doc.pages[0].sections[0].children[0];
+ assert.ok(validDocument(doc));assert.equal(typographyAt(layer.box).fontWeight,400);assert.match(typographyAt(layer.box).fontFamily,/^Arial/);
+ const renderer=readFileSync(new URL('../app/studio-next/renderer.tsx',import.meta.url),'utf8');
+ for(const fontWeight of fontWeights){
+  const next=patchBox(doc,layer.id,'desktop',{fontFamily:'inter',fontWeight});
+  assert.ok(validDocument(JSON.parse(JSON.stringify(next))));assert.equal(typographyAt(next.pages[0].sections[0].children[0].box).fontWeight,fontWeight);
+  assert.ok(renderer.includes(`@fontsource/inter/${fontWeight}.css`));
+  assert.match(readFileSync(new URL(`../node_modules/@fontsource/inter/${fontWeight}.css`,import.meta.url),'utf8'),new RegExp('font-weight: '+fontWeight));
+ }
+ assert.match(typographyAt({...layer.box,fontWeight:200}).fontFamily,/^Inter/);
+ assert.match(typographyAt({...layer.box,fontWeight:700}).fontFamily,/^Arial/);
+});
+test('typography breakpoint overrides do not mutate desktop and reject invalid inputs',()=>{
+ const doc=migrate(),layer=doc.pages[0].sections[0].children[0];
+ const next=patchBox(doc,layer.id,'mobile',{fontFamily:'inter',fontWeight:800}),after=next.pages[0].sections[0].children[0];
+ assert.ok(validDocument(next));assert.equal(typographyAt(boxAt(after,'mobile')).fontWeight,800);assert.equal(typographyAt(boxAt(after,'desktop')).fontWeight,400);
+ for(const patch of [{fontWeight:0},{fontWeight:1000},{fontWeight:450},{fontWeight:'bold'},{fontWeight:null},{fontFamily:'url(evil)'},{unexpected:1}]){
+  assert.equal(validDocument(patchBox(doc,layer.id,'desktop',patch)),false);
+  assert.equal(validDocument(patchBox(doc,layer.id,'tablet',patch)),false);
+ }
+ const missing=migrate();delete missing.pages[0].sections[0].children[0].box.x;assert.equal(validDocument(missing),false);
+});
 test('migrates five pages with stable, unique nodes and a valid schema',()=>{
  const doc=migrate();assert.ok(validDocument(doc));assert.equal(doc.pages.length,5);assert.equal(JSON.stringify(doc),JSON.stringify(migrate()));assert.equal(doc.pages[0].sections[0].children[1].text,content.text.heroLine1);
 });
