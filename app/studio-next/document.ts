@@ -58,6 +58,23 @@ export function migrate():Document{
  }
  return document;
 }
+export function referenceSkeletonHome():Page{
+ let n=0;const text=(value:string,box:Partial<Box>={})=>makeLayer('text',`sk-l-${++n}`,value,box);
+ const image=(index:number,box:Partial<Box>={})=>{const p=projects[index%projects.length];return {...makeLayer('image',`sk-l-${++n}`,'',box),name:p.name,src:p.image,alt:p.alt};};
+ const section=(name:string,height:number,background:string,children:Layer[]):Section=>({id:`sk-s-${++n}`,name,height,background,layout:'free',gap:24,padding:48,children});
+ const home:Page={id:'home',name:'首页',sections:[
+  section('灰底引言',760,'#929291',[text('A / FORM — INDEPENDENT DESIGNER',{x:48,y:32,width:650,height:35,fontSize:18,color:'#000000'}),text('IDEAS\nIN MOTION.',{x:260,y:190,width:920,height:310,fontSize:156,align:'center',color:'#000000'}),text('Brand identity, art direction and digital experiences shaped with clarity and tension.',{x:480,y:550,width:480,height:90,fontSize:22,align:'center',lineHeight:1.35,tracking:-.02,color:'#000000'})]),
+  section('环形项目',980,'#000000',[...Array.from({length:10},(_,i)=>{const angle=i*Math.PI*2/10-Math.PI/2;return image(i,{x:620+Math.cos(angle)*470,y:430+Math.sin(angle)*330,width:200,height:145,rotation:(i-4.5)*6});}),text('SELECTED\nWORK',{x:520,y:380,width:400,height:180,fontSize:82,align:'center'}),text('04 CONCEPT STUDIES',{x:570,y:570,width:300,height:30,fontSize:16,align:'center'})]),
+  section('Recent Works 节奏带',760,'#000000',[text('RECENT WORKS\nHEY, CREATIVE DESIGN\nIS FOR THE FUTURE.',{x:48,y:80,width:720,height:280,fontSize:70}),...Array.from({length:9},(_,i)=>image(i,{x:i*160,y:580-(i%3)*40,width:160,height:180+(i%3)*40}))]),
+  section('散点叙事',850,'#000000',[...[[70,90,220,170],[1050,100,300,160],[180,600,340,190],[1120,570,190,220]].map((b,i)=>image(i,{x:b[0],y:b[1],width:b[2],height:b[3]})),text('EVERYTHING\nTO → CREATE\nANYTHING',{x:500,y:350,width:440,height:180,fontSize:54,align:'center'})]),
+  section('弧形视觉墙',720,'#000000',[...Array.from({length:15},(_,i)=>image(i,{x:45+(i%5)*275,y:80+Math.floor(i/5)*185,width:260,height:165,rotation:(i%5-2)*2,radius:12}))]),
+  section('创意设计叙事',850,'#3d3d3d',[text('CREATIVE DESIGN\nWORK\nFOR A FUTURE.',{x:48,y:230,width:620,height:330,fontSize:92}),...[[1050,80],[820,330],[1050,350],[1050,610]].map((p,i)=>image(i,{x:p[0],y:p[1],width:230,height:190}))]),
+  section('六宫格项目',900,'#000000',[text('CREATIVE\nSYSTEMS',{x:420,y:60,width:600,height:190,fontSize:100,align:'center'}),...Array.from({length:6},(_,i)=>image(i,{x:190+(i%3)*360,y:330+Math.floor(i/3)*235,width:340,height:210,radius:6})),text('STOP OVERTHINKING. MAKE THE IDEA VISIBLE.',{x:390,y:805,width:660,height:40,fontSize:24,align:'center'})]),
+  section('联系',620,'#173bff',[text(saved.text.contactHeading,{x:48,y:120,width:1340,height:220,fontSize:150}),text(saved.text.contactBody,{x:48,y:440,width:650,height:100,fontSize:24,lineHeight:1.35,tracking:-.02})])
+ ]};
+ for(const s of home.sections){let y=24;for(const l of s.children){const fs=l.type==='text'?Math.min(48,Math.max(14,l.box.fontSize*.42)):14,h=l.type==='text'?Math.max(44,Math.ceil(l.text.length/18)*fs*1.12):190;l.overrides.mobile={x:18,y,width:354,height:h,fontSize:fs,rotation:0};y+=h+18;}}
+ return home;
+}
 const record=(x:unknown):x is Record<string,unknown>=>!!x&&typeof x==='object'&&!Array.isArray(x);
 const color=(v:unknown)=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
 export const safeSource=(v:unknown)=>typeof v==='string'&&(/^\/images\/[a-zA-Z0-9._-]+\.(png|jpg|jpeg|webp)$/.test(v)||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(v)&&v.length<2_800_000));

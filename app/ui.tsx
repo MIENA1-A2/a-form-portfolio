@@ -3,7 +3,7 @@ import {useContent} from "./content";
 import Link from "next/link";
 import {usePathname,useRouter} from "next/navigation";
 import {AnimatePresence,LayoutGroup,motion,useReducedMotion} from "motion/react";
-import {createContext,useContext,useEffect,useState,type MouseEvent,type ReactNode} from "react";
+import {createContext,useContext,useEffect,useState,type CSSProperties,type MouseEvent,type ReactNode} from "react";
 import {profile,type Project} from "./data";
 import {assetPath} from "./paths";
 
@@ -24,9 +24,9 @@ export function PageShell({children}:{children:ReactNode}){
  }
  return <NavigateContext.Provider value={navigate}><LayoutGroup><a className="skip-link" href="#main-content">Skip to content</a>{children}<AnimatePresence>{cover&&<motion.div className="route-cover" initial={{opacity:1}} exit={{opacity:0}} transition={{duration:.25}} aria-hidden="true"><motion.img src={assetPath(cover.project.image)} alt="" initial={cover.rect} animate={{top:0,left:0,width:"100vw",height:"100vh"}} transition={{duration:content.motion.duration,ease:[.22,1,.36,1]}} onAnimationComplete={()=>{if(pathname===cover.from)router.push("/work/"+cover.project.slug,{scroll:true})}}/></motion.div>}</AnimatePresence></LayoutGroup></NavigateContext.Provider>
 }
-export function ProjectLink({project,children,className=""}:{project:Project;children:ReactNode;className?:string}){
+export function ProjectLink({project,children,className="",style}:{project:Project;children:ReactNode;className?:string;style?:CSSProperties}){
  const navigate=useContext(NavigateContext);
- return <Link className={className} href={"/work/"+project.slug} onClick={e=>navigate(e,project)} aria-label={"View project: "+project.name}>{children}</Link>
+ return <Link className={className} style={style} href={"/work/"+project.slug} onClick={e=>navigate(e,project)} aria-label={"View project: "+project.name}>{children}</Link>
 }
 export function BackLink(){return <Link className="back-link" href="/" onClick={()=>sessionStorage.setItem("aform-restore","yes")}>← BACK TO SELECTED WORK</Link>}
 export function Navigation({dark=false}:{dark?:boolean}){

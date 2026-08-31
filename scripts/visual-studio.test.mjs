@@ -44,7 +44,7 @@ test('plain-text synchronization replaces externally modified text without child
  syncPlainText(unchanged,'same');assert.equal(writes,0);
 });
 const content=JSON.parse(readFileSync(new URL('../app/site-content.json',import.meta.url),'utf8'));
-const {migrate,validDocument,patchBox,boxAt,updateLayer,typographyAt,fontWeights}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content,'./effects':effects});
+const {migrate,referenceSkeletonHome,validDocument,patchBox,boxAt,updateLayer,typographyAt,fontWeights}=moduleAt('../app/studio-next/document.ts',{'../data':data,'../site-content.json':content,'./effects':effects});
 test('font weights preserve legacy appearance and support all nine real Inter faces',()=>{
  const doc=migrate(),layer=doc.pages[0].sections[0].children[0];
  assert.ok(validDocument(doc));assert.equal(typographyAt(layer.box).fontWeight,400);assert.match(typographyAt(layer.box).fontFamily,/^Arial/);
@@ -70,6 +70,9 @@ test('typography breakpoint overrides do not mutate desktop and reject invalid i
 });
 test('migrates five pages with stable, unique nodes and a valid schema',()=>{
  const doc=migrate();assert.ok(validDocument(doc));assert.equal(doc.pages.length,5);assert.equal(JSON.stringify(doc),JSON.stringify(migrate()));assert.equal(doc.pages[0].sections[0].children[1].text,content.text.heroLine1);
+});
+test('reference skeleton is an editable eight-section homepage with image-led compositions',()=>{
+ const doc=migrate(),home=referenceSkeletonHome();doc.pages[0]=home;assert.ok(validDocument(doc));assert.equal(home.sections.length,8);assert.equal(home.sections.find(s=>s.name==='弧形视觉墙').children.length,15);assert.ok(home.sections.flatMap(s=>s.children).filter(l=>l.type==='image').length>=40);
 });
 test('breakpoint edits are immutable and do not change desktop',()=>{
  const doc=migrate(),layer=doc.pages[0].sections[0].children[1],original=JSON.stringify(layer.overrides);const next=patchBox(doc,layer.id,'mobile',{x:24,fontSize:45});const after=next.pages[0].sections[0].children[1];assert.equal(boxAt(after,'mobile').x,24);assert.equal(after.box.x,layer.box.x);assert.notEqual(next,doc);assert.equal(JSON.stringify(layer.overrides),original);assert.ok(validDocument(next));
