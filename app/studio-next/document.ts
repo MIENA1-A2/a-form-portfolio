@@ -56,6 +56,7 @@ export function migrate():Document{
    l.overrides.mobile={x:18,y,width:354,height,fontSize,lineHeight:l.box.fontSize<40?1.4:1};y+=height+24;
   }
  }
+ document.pages[0]=referenceSkeletonHome();
  return document;
 }
 export function referenceSkeletonHome():Page{
@@ -74,6 +75,11 @@ export function referenceSkeletonHome():Page{
  ]};
  for(const s of home.sections){let y=24;for(const l of s.children){const fs=l.type==='text'?Math.min(48,Math.max(14,l.box.fontSize*.42)):14,h=l.type==='text'?Math.max(44,Math.ceil(l.text.length/18)*fs*1.12):190;l.overrides.mobile={x:18,y,width:354,height:h,fontSize:fs,rotation:0};y+=h+18;}}
  return home;
+}
+export function upgradeLegacyDocument(document:Document){
+ const home=document.pages.find(page=>page.id==='home');
+ const legacy=!!home&&(home.sections[0]?.name==='Hero / 首屏'||home.sections.some(section=>section.name==='Selected Works'));
+ return legacy?{document:{...document,pages:document.pages.map(page=>page.id==='home'?referenceSkeletonHome():page)},upgraded:true}:{document,upgraded:false};
 }
 const record=(x:unknown):x is Record<string,unknown>=>!!x&&typeof x==='object'&&!Array.isArray(x);
 const color=(v:unknown)=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
