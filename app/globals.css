@@ -13,3 +13,4 @@ body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opac
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}.hero-sculpture,.hero-title{transform:none!important}}
 .common-secondary{isolation:isolate}.giant-number{z-index:0}.common-secondary>.artwork{z-index:1}
 .static-sculpture{mix-blend-mode:screen}
+.app-loading,.not-found{min-height:100vh;background:#000;color:#f2f2f0;display:grid;place-content:center;padding:48px}.app-loading{font:14px/1.4 Inter,Arial,sans-serif}.not-found p{font-size:12px}.not-found h1{font-size:clamp(54px,10vw,160px);line-height:.82;letter-spacing:-.08em;margin:24px 0 70px}.not-found a{font-size:13px}

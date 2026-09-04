@@ -2,7 +2,7 @@
 import {createContext,useContext,useEffect,useState,type ReactNode} from "react";
 import saved from "./site-content.json";
 import {validContent,type SiteContent} from "./content-schema";
-import {usePathname} from "next/navigation";
+import {usePathname} from "./router";
 export const initialContent:SiteContent=saved;
 const Context=createContext<SiteContent>(initialContent);
 export const useContent=()=>useContext(Context);

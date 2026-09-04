@@ -8,9 +8,9 @@
 
 发布地址：https://miena1-a2.github.io/a-form-portfolio/
 
-仓库 Settings → Pages → Source 选择 GitHub Actions。推送 main 后自动测试、构建并发布。使用 `npm ci` 与 `npm run build:pages` 可在本地生成相同的 `out/` 静态文件。五个页面均预渲染，支持直接访问项目地址；无效地址使用 404 页面。生产站点基路径、图片路径与分享元数据已配置在 `next.config.ts` 和 `app/paths.ts`。
+仓库 Settings → Pages → Source 选择 GitHub Actions。推送 main 后自动测试、构建并发布。使用 `npm ci` 与 `npm run build:pages` 可在本地生成相同的 `out/` 静态文件。构建脚本为四个项目详情页生成独立 HTML 元数据，并提供 SPA 404 回退；生产站点基路径由 Vite 和 `app/paths.ts` 统一处理。
 
-保留 Sites / vinext 本地开发结构，Pages 发布单独使用 Next.js 静态导出，不部署服务器。
+前端为纯 React + Vite 静态应用，不依赖 Next.js 或 Vinext。Cloudflare Worker 继续作为独立的登录、云草稿和发布 API，前端发布不会重新部署后端。
 
 ## 运行
 
@@ -60,4 +60,4 @@ node --test scripts/validate.mjs
 
 建议人工检查 1920×1080、1024×768、390×844、320×700：无非预期横向滚动，标题不截断，项目可访问，返回位置正确；用 Tab 检查链接与跳转内容；打开系统“减少动态效果”确认静态降级。
 
-发布适配时已升级 Next.js 至 16.3.3；2026-08-27 执行 `npm audit --omit=dev` 为 0 项漏洞。完整开发工具依赖树仍有审计公告，不作为线上服务运行。公开版本只有静态文件；后续更新依赖后应重新审计。
+公开版本只有 Vite 生成的静态文件；后续更新依赖后应重新执行依赖审计。
