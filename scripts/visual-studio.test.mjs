@@ -80,8 +80,16 @@ test('breakpoint edits are immutable and do not change desktop',()=>{
 test('image replacement retains geometry and supports undo snapshots',()=>{
  const doc=migrate(),layer=doc.pages[0].sections[0].children.find(l=>l.type==='image'),next=updateLayer(doc,layer.id,l=>({...l,src:'/images/common.png'})),after=next.pages[0].sections[0].children.find(l=>l.id===layer.id);assert.equal(after.box,layer.box);assert.equal(layer.src,'/images/phase.png');assert.ok(validDocument(next));
 });
-test('legacy cloud drafts upgrade only the homepage and preserve project pages',()=>{
- const legacy=migrate(),project=legacy.pages[1];legacy.pages[0].sections[0].name='Hero / 首屏';const result=upgradeLegacyDocument(legacy);assert.equal(result.upgraded,true);assert.equal(result.document.pages[0].sections[0].name,'参考图首屏');assert.equal(result.document.pages[1],project);assert.ok(validDocument(result.document));assert.equal(upgradeLegacyDocument(result.document).upgraded,false);
+test('legacy drafts retain every custom layer without implicit migration',()=>{
+ const legacy=migrate();legacy.pages[0].sections[0].name='Hero / 首屏';legacy.pages[0].sections[0].children[0].text='MY CUSTOM DESIGN';const before=JSON.stringify(legacy);const result=upgradeLegacyDocument(legacy);assert.equal(result.upgraded,false);assert.equal(result.document,legacy);assert.equal(JSON.stringify(result.document),before);assert.ok(validDocument(result.document));
+});
+test('project links are available in shared documents and unsafe links are rejected',()=>{
+ const doc=migrate(),layer=doc.pages[0].sections.flatMap(s=>s.children).find(l=>l.type==='image');assert.ok(layer.href.startsWith('/work/'));assert.ok(validDocument(doc));
+ for(const href of ['javascript:alert(1)','https://evil.test','//evil.test','/work/missing/']){layer.href=href;assert.equal(validDocument(doc),false);}
+});
+test('copy has no cloud fetch in its document loading and synchronization paths',()=>{
+ for(const file of ['cloud-sync.tsx','published.tsx','local-document.ts']){const source=readFileSync(new URL('../app/studio-next/'+file,import.meta.url),'utf8');assert.doesNotMatch(source,/workers\.dev|fetch\(/);}
+ const source=readFileSync(new URL('../app/studio-next/assets.ts',import.meta.url),'utf8');assert.match(source,/aform-visual-studio-rebuild/);assert.match(source,/entries\.slice\(-10\)/);
 });
 test('rejects hostile URLs, duplicate IDs, invalid geometry and dangerous SVG',()=>{
  for(const mutate of [d=>d.pages[0].sections[0].children[0].src='javascript:alert(1)',d=>d.pages[1].id=d.pages[0].id,d=>d.pages[0].sections[0].children[0].box.width=Infinity,d=>d.pages[0].sections[0].children[0].box.color='red;display:none',d=>d.pages[0].sections[0].children[0].model.svg='<svg><script>alert(1)</script></svg>',d=>d.pages[0].sections[0].children[0].src='https://evil.test/a.png',d=>d.pages[0].sections[0].children[0].overrides.mobile={position:'fixed'},d=>d.pages[0].sections[0].children[0].motion.duration=0]){const doc=structuredClone(migrate());mutate(doc);assert.equal(validDocument(doc),false);}

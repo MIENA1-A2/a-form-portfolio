@@ -1,3 +1,4 @@
+const databaseName=typeof location!=='undefined'&&location.pathname.includes('/preview/')?'aform-visual-studio-preview':'aform-visual-studio-rebuild';
 // SVG is parsed as inert XML and rebuilt from a small geometry-only allowlist.
 // Never render uploaded SVG markup into the DOM or load referenced resources.
 export function sanitizeSvg(source:string):string{
@@ -37,9 +38,28 @@ export async function importImage(file:File):Promise<string>{
 }
 export async function draftStore(mode:'read'|'write',value?:unknown):Promise<unknown>{
  return new Promise((resolve,reject)=>{
-  const request=indexedDB.open('aform-visual-studio',1);
+  const request=indexedDB.open(databaseName,2);
   request.onupgradeneeded=()=>request.result.createObjectStore('drafts');
   request.onerror=()=>reject(Error('无法访问本机草稿，请导出文件保存。'));
-  request.onsuccess=()=>{const db=request.result,tx=db.transaction('drafts',mode==='read'?'readonly':'readwrite');const op=mode==='read'?tx.objectStore('drafts').get('v2'):tx.objectStore('drafts').put(value,'v2');let result:unknown;op.onsuccess=()=>{result=op.result};tx.oncomplete=()=>{db.close();resolve(result)};tx.onerror=()=>{db.close();reject(Error('草稿保存失败，可能是存储空间不足；请导出备份。'))};};
+  request.onsuccess=()=>{
+   const db=request.result,tx=db.transaction('drafts',mode==='read'?'readonly':'readwrite'),store=tx.objectStore('drafts');let result:unknown;
+   const op=store.get('v2');op.onsuccess=()=>{
+    result=op.result;if(mode==='read')return;
+    const previous=op.result,history=store.get('history');history.onsuccess=()=>{
+     const entries=Array.isArray(history.result)?history.result:[];
+     if(previous&&JSON.stringify(previous)!==JSON.stringify(value))entries.push({time:new Date().toISOString(),document:previous});
+     store.put(entries.slice(-10),'history');store.put(value,'v2');
+    };
+   };
+   tx.oncomplete=()=>{db.close();resolve(result)};tx.onabort=tx.onerror=()=>{db.close();reject(Error('草稿保存失败，可能是存储空间不足；请导出备份。'))};
+  };
+ });
+}
+export async function readHistory():Promise<Array<{time:string;document:unknown}>>{
+ return new Promise((resolve,reject)=>{
+  const request=indexedDB.open(databaseName,2);
+  request.onupgradeneeded=()=>request.result.createObjectStore('drafts');
+  request.onerror=()=>reject(Error('无法读取历史记录'));
+  request.onsuccess=()=>{const db=request.result,tx=db.transaction('drafts','readonly'),op=tx.objectStore('drafts').get('history');op.onsuccess=()=>resolve(Array.isArray(op.result)?op.result:[]);tx.oncomplete=()=>db.close();tx.onerror=()=>{db.close();reject(Error('无法读取历史记录'))};};
  });
 }

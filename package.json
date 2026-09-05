@@ -9,7 +9,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:pages": "node scripts/build-pages.mjs",
-    "test": "node --test scripts/validate.mjs scripts/studio.test.mjs scripts/visual-studio.test.mjs scripts/cloud-sync.test.mjs",
+    "build:release": "node scripts/build-release.mjs",
+    "test": "node --test scripts/validate.mjs scripts/studio.test.mjs scripts/visual-studio.test.mjs scripts/cloud-sync.test.mjs scripts/selection.test.mjs scripts/persistence-fault.test.mjs scripts/layout.test.mjs",
     "start": "vite preview",
     "lint": "tsc --noEmit"
   },

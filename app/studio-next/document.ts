@@ -3,13 +3,13 @@ import saved from '../site-content.json';
 import {validReveal,validSurface,type RevealOptions,type Surface} from './effects';
 
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
-export type Box = { x:number;y:number;width:number;height:number;fontSize:number;fontWeight?:number;fontFamily?:'arial'|'inter';lineHeight:number;tracking:number;rotation:number;opacity:number;radius:number;color:string;background:string;align:'left'|'center'|'right';fit:'cover'|'contain';focalX:number;focalY:number };
+export type Box = { widthMode?:'legacy'|'fixed'|'fill';anchor?:'free'|'left'|'center'|'right';insetLeft?:number;insetRight?:number;maxWidth?:number;heightMode?:'fixed'|'auto';x:number;y:number;width:number;height:number;fontSize:number;fontWeight?:number;fontFamily?:'arial'|'inter';lineHeight:number;tracking:number;rotation:number;opacity:number;radius:number;color:string;background:string;align:'left'|'center'|'right';fit:'cover'|'contain';focalX:number;focalY:number };
 export const fontWeights=[100,200,300,400,500,600,700,800,900] as const;
 export function typographyAt(box:Box){const fontWeight=box.fontWeight??400;return {fontWeight,fontFamily:box.fontFamily==='inter'||![400,700].includes(fontWeight)?'Inter, Arial, sans-serif':'Arial, Helvetica, sans-serif'};}
 export type MotionSpec = RevealOptions & { enter:boolean;distance:number;duration:number;delay:number;hover:number };
 export type ModelSpec = { svg:string;depth:number;bevel:number;metalness:number;roughness:number;transmission:number;ior:number;clearcoat:number;color:string;rotate:boolean;pointer:number };
-export type Layer = { id:string;name:string;type:'text'|'image'|'model';text:string;src:string;alt:string;hidden:boolean;locked:boolean;box:Box;overrides:Partial<Record<Breakpoint,Partial<Box>>>;motion:MotionSpec;model:ModelSpec;surface?:Surface };
-export type Section = { id:string;name:string;height:number;background:string;backgroundMode?:'solid'|'gradient';layout:'free'|'row'|'column';gap:number;padding:number;children:Layer[];surface?:Surface };
+export type Layer = { id:string;name:string;groupId?:string;type:'text'|'image'|'model';href?:string;text:string;src:string;alt:string;hidden:boolean;locked:boolean;box:Box;overrides:Partial<Record<Breakpoint,Partial<Box>>>;motion:MotionSpec;model:ModelSpec;surface?:Surface };
+export type Section = { autoHeight?:boolean;id:string;name:string;height:number;background:string;backgroundMode?:'solid'|'gradient';layout:'free'|'row'|'column';gap:number;padding:number;children:Layer[];surface?:Surface };
 export type Page = { id:string;name:string;sections:Section[] };
 export type Document = { version:2;pages:Page[] };
 export const widths:Record<Breakpoint,number>={desktop:1440,tablet:768,mobile:390};
@@ -24,6 +24,10 @@ export function boxAt(layer:Layer,bp:Breakpoint):Box{
 export function sectionHeight(section:Section,bp:Breakpoint){return Math.max(bp==='desktop'?100:180,section.height*widths[bp]/1440,...section.children.filter(l=>!l.hidden).map(l=>{const b=boxAt(l,bp);return b.y+b.height+(bp==='desktop'?0:24)}));}
 export function updateLayer(doc:Document,id:string,update:(layer:Layer)=>Layer):Document{return {...doc,pages:doc.pages.map(p=>({...p,sections:p.sections.map(s=>({...s,children:s.children.map(l=>l.id===id?update(l):l)}))}))};}
 export function patchBox(doc:Document,id:string,bp:Breakpoint,patch:Partial<Box>){return updateLayer(doc,id,l=>bp==='desktop'?{...l,box:{...l.box,...patch}}:{...l,overrides:{...l.overrides,[bp]:{...l.overrides[bp],...patch}}});}
+export function resetBoxOverride(doc:Document,id:string,bp:Breakpoint,key?:keyof Box){
+ if(bp==='desktop')return doc;
+ return updateLayer(doc,id,layer=>{const overrides={...layer.overrides};if(key){const value={...overrides[bp]};delete value[key];if(Object.keys(value).length)overrides[bp]=value;else delete overrides[bp];}else delete overrides[bp];return {...layer,overrides};});
+}
 export function migrate():Document{
  let count=0;const layer=(type:Layer['type'],text:string,box:Partial<Box>={})=>makeLayer(type,`m-${++count}`,text,box);
  const section=(name:string,height:number,background:string,children:Layer[]):Section=>({id:`s-${++count}`,name,height,background,children,layout:'free',gap:24,padding:48});
@@ -61,7 +65,7 @@ export function migrate():Document{
 }
 export function referenceSkeletonHome():Page{
  let n=0;const text=(value:string,box:Partial<Box>={})=>makeLayer('text',`sk-l-${++n}`,value,box);
- const image=(index:number,box:Partial<Box>={})=>{const p=projects[index%projects.length];return {...makeLayer('image',`sk-l-${++n}`,'',box),name:p.name,src:p.image,alt:p.alt};};
+ const image=(index:number,box:Partial<Box>={})=>{const p=projects[index%projects.length];return {...makeLayer('image',`sk-l-${++n}`,'',box),name:p.name,src:p.image,alt:p.alt,href:'/work/'+p.slug+'/'};};
  const section=(name:string,height:number,background:string,children:Layer[]):Section=>({id:`sk-s-${++n}`,name,height,background,layout:'free',gap:24,padding:48,children});
  const home:Page={id:'home',name:'首页',sections:[
   section('参考图首屏',860,'#f2f2f0',[text('A /',{x:8,y:0,width:420,height:205,fontSize:220,fontWeight:900,color:'#000000'}),text('FORM®',{x:760,y:0,width:670,height:205,fontSize:220,fontWeight:900,align:'right',color:'#000000'}),text('THIS IS A SPACE FOR\nVISUAL DISCOVERY',{x:20,y:260,width:260,height:70,fontSize:17,fontWeight:800,color:'#000000'}),image(0,{x:505,y:250,width:430,height:535}),text('INDEX                                      1/2\n\nFour self-initiated studies in identity, image-making and digital direction. Each project turns a complex idea into a clear visual system.\n\n[ EXPLORE WORK ]',{x:20,y:465,width:420,height:270,fontSize:17,fontWeight:600,lineHeight:1.15,tracking:-.02,color:'#000000'}),text('ABOUT A / FORM\n\nAn independent design practice exploring the space between clear systems and unexpected expression.',{x:1030,y:570,width:350,height:170,fontSize:17,fontWeight:600,lineHeight:1.15,tracking:-.02,color:'#000000'})]),
@@ -77,19 +81,18 @@ export function referenceSkeletonHome():Page{
  return home;
 }
 export function upgradeLegacyDocument(document:Document){
- const home=document.pages.find(page=>page.id==='home');
- const legacy=!!home&&(home.sections[0]?.name==='Hero / 首屏'||home.sections.some(section=>section.name==='Selected Works'));
- return legacy?{document:{...document,pages:document.pages.map(page=>page.id==='home'?referenceSkeletonHome():page)},upgraded:true}:{document,upgraded:false};
+ // Loading must never redesign or discard user content.
+ return {document,upgraded:false};
 }
 const record=(x:unknown):x is Record<string,unknown>=>!!x&&typeof x==='object'&&!Array.isArray(x);
 const color=(v:unknown)=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
 export const safeSource=(v:unknown)=>typeof v==='string'&&(/^\/images\/[a-zA-Z0-9._-]+\.(png|jpg|jpeg|webp)$/.test(v)||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(v)&&v.length<2_800_000));
 function validBox(x:unknown,partial=false):boolean{
  if(!record(x))return false;
- const bounds:Record<string,[number,number]>={x:[-5000,10000],y:[-5000,20000],width:[10,5000],height:[10,10000],fontSize:[8,600],lineHeight:[.5,3],tracking:[-.2,1],rotation:[-360,360],opacity:[0,1],radius:[0,1000],focalX:[0,100],focalY:[0,100]};
+ const bounds:Record<string,[number,number]>={x:[-5000,10000],y:[-5000,20000],width:[10,5000],height:[10,10000],fontSize:[8,600],lineHeight:[.5,3],tracking:[-.2,1],rotation:[-360,360],opacity:[0,1],radius:[0,1000],focalX:[0,100],focalY:[0,100],insetLeft:[0,1000],insetRight:[0,1000],maxWidth:[0,5000]};
  // Typography is optional so documents saved before font controls remain valid.
  if(!partial&&!Object.keys(defaultBox).every(k=>Object.hasOwn(x,k)))return false;
- return Object.entries(x).every(([k,v])=>k==='fontWeight'?typeof v==='number'&&fontWeights.some(w=>w===v):k==='fontFamily'?v==='arial'||v==='inter':bounds[k]?typeof v==='number'&&Number.isFinite(v)&&v>=bounds[k][0]&&v<=bounds[k][1]:k==='color'||k==='background'?color(v):k==='align'?['left','center','right'].includes(String(v)):k==='fit'?['cover','contain'].includes(String(v)):false);
+ return Object.entries(x).every(([k,v])=>k==='widthMode'?['legacy','fixed','fill'].includes(String(v)):k==='anchor'?['free','left','center','right'].includes(String(v)):k==='heightMode'?['fixed','auto'].includes(String(v)):k==='fontWeight'?typeof v==='number'&&fontWeights.some(w=>w===v):k==='fontFamily'?v==='arial'||v==='inter':bounds[k]?typeof v==='number'&&Number.isFinite(v)&&v>=bounds[k][0]&&v<=bounds[k][1]:k==='color'||k==='background'?color(v):k==='align'?['left','center','right'].includes(String(v)):k==='fit'?['cover','contain'].includes(String(v)):false);
 }
 export function validDocument(value:unknown):value is Document{
  if(!record(value)||value.version!==2||!Array.isArray(value.pages)||value.pages.length!==5)return false;
@@ -100,8 +103,8 @@ export function validDocument(value:unknown):value is Document{
  const id=(v:unknown)=>{if(typeof v!=='string'||!/^[-a-zA-Z0-9_]{1,80}$/.test(v)||ids.has(v))return false;ids.add(v);return true;};
  const short=(v:unknown,max=200)=>typeof v==='string'&&v.length<=max;
  return value.pages.every(p=>record(p)&&id(p.id)&&short(p.name)&&Array.isArray(p.sections)&&p.sections.length>0&&p.sections.length<=40&&p.sections.every(s=>{
-  if(!record(s)||!validSurface(s.surface)||!id(s.id)||!short(s.name)||!color(s.background)||!['free','row','column'].includes(String(s.layout))||!Array.isArray(s.children)||typeof s.height!=='number'||s.height<100||s.height>10000||typeof s.gap!=='number'||s.gap<0||s.gap>300||typeof s.padding!=='number'||s.padding<0||s.padding>300)return false;
-  return s.children.every(l=>{if(++total>500||!record(l)||!id(l.id)||!short(l.name)||!['text','image','model'].includes(String(l.type))||!short(l.text,10000)||!safeSource(l.src)||!short(l.alt,2000)||typeof l.hidden!=='boolean'||typeof l.locked!=='boolean'||!validBox(l.box)||!record(l.overrides)||!Object.entries(l.overrides).every(([k,v])=>['desktop','tablet','mobile'].includes(k)&&validBox(v,true))||!record(l.motion)||!validReveal(l.motion)||!validSurface(l.surface)||!record(l.model))return false;
+  if(!record(s)||(s.autoHeight!==undefined&&typeof s.autoHeight!=='boolean')||!validSurface(s.surface)||!id(s.id)||!short(s.name)||!color(s.background)||!['free','row','column'].includes(String(s.layout))||!Array.isArray(s.children)||typeof s.height!=='number'||s.height<100||s.height>10000||typeof s.gap!=='number'||s.gap<0||s.gap>300||typeof s.padding!=='number'||s.padding<0||s.padding>300)return false;
+  return s.children.every(l=>{if(!record(l)||(l.groupId!==undefined&&(typeof l.groupId!=='string'||!/^[-a-zA-Z0-9_]{1,80}$/.test(l.groupId)))||(l.href!==undefined && !(typeof l.href==='string' && ['/',...projects.map(p=>'/work/'+p.slug+'/')].includes(l.href)))||++total>500||!record(l)||!id(l.id)||!short(l.name)||!['text','image','model'].includes(String(l.type))||!short(l.text,10000)||!safeSource(l.src)||!short(l.alt,2000)||typeof l.hidden!=='boolean'||typeof l.locked!=='boolean'||!validBox(l.box)||!record(l.overrides)||!Object.entries(l.overrides).every(([k,v])=>['desktop','tablet','mobile'].includes(k)&&validBox(v,true))||!record(l.motion)||!validReveal(l.motion)||!validSurface(l.surface)||!record(l.model))return false;
    const m=l.motion,model=l.model;
    return typeof m.enter==='boolean'&&typeof m.distance==='number'&&m.distance>=0&&m.distance<=100&&typeof m.duration==='number'&&m.duration>=.1&&m.duration<=5&&typeof m.delay==='number'&&m.delay>=0&&m.delay<=5&&typeof m.hover==='number'&&m.hover>=1&&m.hover<=1.2&&short(model.svg,100000)&&!/<(?:script|foreignObject|image|use|text|filter|mask)\b|\bon\w+\s*=|(?:href|url)\s*[=(]|<!DOCTYPE|<!ENTITY/i.test(String(model.svg))&&color(model.color)&&typeof model.rotate==='boolean'&&Object.entries({depth:[1,100],bevel:[0,20],metalness:[0,1],roughness:[0,1],transmission:[0,1],ior:[1,2.5],clearcoat:[0,1],pointer:[0,10]}).every(([k,[min,max]])=>typeof model[k]==='number'&&Number.isFinite(model[k])&&(model[k] as number)>=min&&(model[k] as number)<=max);
   });

@@ -23,6 +23,7 @@ test('cloud drafts, atomic conflicts, publication and owner-only access in real 
   assert.equal((await req('/v2/save',{},token,'https://evil.test')).status,403);
   let state=await (await req('/v2/state')).json();assert.equal(state.document,null);assert.equal(state.revision,0);
   const doc=migrate();doc.pages[0].sections[0].children[0].text='PRIVATE DRAFT';
+  Object.assign(doc.pages[0].sections[0].children[0].box,{widthMode:'fill',maxWidth:600,anchor:'center',heightMode:'auto'});
   let response=await req('/v2/save',{document:doc,baseRevision:0,publish:false});assert.equal(response.status,200);assert.equal((await response.json()).revision,1);
   assert.equal((await (await req('/v2/published',undefined,'')).json()).document,null);
   state=await (await req('/v2/state')).json();assert.deepEqual(state.document,doc);
