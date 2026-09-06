@@ -2,6 +2,7 @@ import {lazy,Suspense,useEffect,useRef,useState} from 'react';
 import {migrate,type Breakpoint} from './document';
 import {assetPath} from '../paths';
 import {Footer} from '../ui';
+import PublicNav from './public-nav';
 const Renderer=lazy(()=>import('./renderer'));
 import {refreshPublicDocument,type RefreshIssue} from './public-refresh';
 const noop=()=>{};
@@ -11,5 +12,5 @@ export default function RemotePublished({pageId}:{pageId:string}){
  useEffect(()=>{const element=host.current;if(!element)return;const observer=new ResizeObserver(entries=>setWidth(entries[0].contentRect.width));observer.observe(element);return()=>observer.disconnect()},[doc]);
  const page=doc.pages.find(p=>p.id===pageId);if(!page)return <main>Page not found. <a href={assetPath('/')}>Home</a></main>;
  const bp:Breakpoint=width<600?'mobile':width<1100?'tablet':'desktop';
- return <div className="v2-public" ref={host} translate="no"><header className="v2-public-nav"><a href={assetPath('/')}>A / FORM</a><nav aria-label="Portfolio pages">{doc.pages.map(p=><a key={p.id} aria-current={p.id===pageId?'page':undefined} href={assetPath(p.id==='home'?'/':'/work/'+p.id+'/')}>{p.id==='home'?'HOME':p.name}</a>)}</nav></header>{issue&&<div role="status" style={{padding:'8px 18px',fontSize:12}}>Showing the bundled portfolio. Live updates are temporarily unavailable. <button onClick={()=>setAttempt(value=>value+1)}>Retry</button></div>}<main id="main-content"><Suspense fallback={<p>Loading artwork…</p>}><Renderer page={page} bp={bp} canvasWidth={width} editing={false} selected="" onSelect={noop} onDrag={noop} onText={noop}/></Suspense></main><Footer/></div>;
+ return <div className="v2-public" ref={host} translate="no"><PublicNav pages={doc.pages} pageId={pageId}/>{issue&&<div role="status" style={{padding:'8px 18px',fontSize:12}}>Showing the bundled portfolio. Live updates are temporarily unavailable. <button onClick={()=>setAttempt(value=>value+1)}>Retry</button></div>}<main id="main-content"><Suspense fallback={<p>Loading artwork…</p>}><Renderer page={page} bp={bp} canvasWidth={width} editing={false} selected="" onSelect={noop} onDrag={noop} onText={noop}/></Suspense></main><Footer/></div>;
 }

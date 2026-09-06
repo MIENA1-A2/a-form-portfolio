@@ -3,6 +3,7 @@ import {widths,type Breakpoint} from './document';
 import {useLocalDocument} from './local-document';
 import {assetPath} from '../paths';
 import {Footer} from '../ui';
+import PublicNav from './public-nav';
 import './published.css';
 const Renderer=lazy(()=>import('./renderer'));
 const noop=()=>{};
@@ -16,5 +17,5 @@ function Published({pageId}:{pageId:string;children?:ReactNode}){
  if(!doc)return <main role="status">Loading your portfolio…</main>;
  const page=doc.pages.find(p=>p.id===pageId);if(!page)return <main>Page not found. <a href={assetPath('/')}>Return home</a></main>;
  const bp:Breakpoint=width<600?'mobile':width<1100?'tablet':'desktop';
- return <div className="v2-public" ref={host} id="top"><header className="v2-public-nav"><a href={assetPath('/')}>A / FORM</a><nav aria-label="Portfolio pages">{doc.pages.map(p=><a key={p.id} aria-current={p.id===pageId?'page':undefined} href={assetPath(p.id==='home'?'/':'/work/'+p.id+'/')}>{p.id==='home'?'HOME':p.name}</a>)}<a href={assetPath('/studio-next/')}>EDIT LOCAL COPY ↗</a></nav></header><main id="main-content" ><Suspense fallback={<p>Loading artwork…</p>}><Renderer page={page} bp={bp} canvasWidth={width} editing={false} selected="" onSelect={noop} onDrag={noop} onText={noop}/></Suspense></main><Footer/></div>;
+ return <div className="v2-public" ref={host} id="top"><PublicNav pages={doc.pages} pageId={pageId}/><main id="main-content" ><Suspense fallback={<p>Loading artwork…</p>}><Renderer page={page} bp={bp} canvasWidth={width} editing={false} selected="" onSelect={noop} onDrag={noop} onText={noop}/></Suspense></main><Footer/></div>;
 }

@@ -77,7 +77,47 @@ export function referenceSkeletonHome():Page{
   section('六宫格项目',900,'#000000',[text('CREATIVE\nSYSTEMS',{x:420,y:60,width:600,height:190,fontSize:100,align:'center'}),...Array.from({length:6},(_,i)=>image(i,{x:190+(i%3)*360,y:330+Math.floor(i/3)*235,width:340,height:210,radius:6})),text('STOP OVERTHINKING. MAKE THE IDEA VISIBLE.',{x:390,y:805,width:660,height:40,fontSize:24,align:'center'})]),
   section('联系',620,'#173bff',[text(saved.text.contactHeading,{x:48,y:120,width:1340,height:220,fontSize:150}),text(saved.text.contactBody,{x:48,y:440,width:650,height:100,fontSize:24,lineHeight:1.35,tracking:-.02})])
  ]};
- for(const s of home.sections){let y=24;for(const l of s.children){const fs=l.type==='text'?Math.min(48,Math.max(14,l.box.fontSize*.42)):14,h=l.type==='text'?Math.max(44,Math.ceil(l.text.length/18)*fs*1.12):190;l.overrides.mobile={x:18,y,width:354,height:h,fontSize:fs,rotation:0};y+=h+18;}}
+ // Editorial refinement: preserve every source layer, hiding only surplus rhythm-band images.
+ const place=(s:number,i:number,x:number,y:number,width:number,height:number,fontSize?:number)=>{const l=home.sections[s].children[i];Object.assign(l.box,{x,y,width,height,rotation:0,radius:0,...(fontSize?{fontSize}:{} )});};
+ home.sections[0].height=880;
+ place(0,0,36,10,480,205,220);place(0,1,738,10,666,205,220);
+ place(0,2,48,260,310,72,17);place(0,3,414,164,612,610);
+ place(0,4,48,470,310,280,17);place(0,5,1080,562,312,190,17);
+ // Layer order puts the enlarged metal image in front of the oversized titles.
+ home.sections[1].height=960;
+ for(let i=0;i<10;i++){const angle=i*Math.PI*2/10-Math.PI/2,big=i===2||i===7,w=big?250:152,h=big?200:116;place(1,i,720+Math.cos(angle)*510-w/2,460+Math.sin(angle)*330-h/2,w,h);home.sections[1].children[i].box.rotation=Math.cos(angle)*8;}
+ place(1,10,500,370,440,170,78);place(1,11,560,562,320,32,16);
+ home.sections[2].height=1050;place(2,0,48,60,1100,240,64);
+ place(2,1,48,330,880,624);place(2,2,952,330,440,300);place(2,3,952,654,440,300);
+ home.sections[2].children.slice(4).forEach(l=>{l.hidden=true});
+ home.sections[3].height=560;
+ place(3,0,48,64,220,155);place(3,1,1172,54,220,155);place(3,2,108,356,270,150);place(3,3,1152,340,210,165);place(3,4,430,172,580,200,60);
+ home.sections[4].height=1796;
+ place(4,0,48,64,880,380);place(4,1,952,64,440,380);
+ for(let i=2;i<15;i++)place(4,i,48+(i-2)%3*456,468+Math.floor((i-2)/3)*252,432,228);
+ home.sections[5].height=880;
+ place(5,0,48,220,500,360,66);place(5,1,600,80,792,430);place(5,2,600,534,384,260);place(5,3,1008,534,384,260);
+ home.sections[5].children[4].hidden=true;
+ home.sections[6].height=920;place(6,0,48,64,1344,180,88);
+ for(let i=1;i<=6;i++)place(6,i,48+(i-1)%3*456,270+Math.floor((i-1)/3)*258,432,234);
+ place(6,7,320,820,800,44,24);
+ home.sections[7].height=700;place(7,0,72,96,1296,320,126);place(7,1,72,480,920,130,24);
+ // Tablet retains the compositions, with readable utility type.
+ for(const s of home.sections)for(const l of s.children){l.overrides.tablet={x:l.box.x*768/1440,y:l.box.y*768/1440,width:l.box.width*768/1440,height:l.box.height*768/1440,fontSize:Math.max(14,l.box.fontSize*768/1440),rotation:l.box.rotation};}
+ const mobile=(s:number,i:number,x:number,y:number,width:number,height:number,fontSize=16)=>{home.sections[s].children[i].overrides.mobile={x,y,width,height,fontSize,rotation:0};};
+ // Compact mobile hero keeps the overlap, then aligns the editorial notes.
+ mobile(0,0,18,16,135,88,78);mobile(0,1,168,16,204,88,70);mobile(0,3,72,80,282,290);
+ mobile(0,2,18,398,354,56,16);mobile(0,4,18,480,354,192,16);mobile(0,5,18,704,354,120,16);
+ for(let i=0;i<10;i++){const angle=i*Math.PI*2/10-Math.PI/2,big=i===2||i===7,w=big?82:54,h=big?70:44;mobile(1,i,195+Math.cos(angle)*145-w/2,236+Math.sin(angle)*170-h/2,w,h);}
+ mobile(1,10,100,191,190,88,34);mobile(1,11,102,290,186,24,12);
+ mobile(2,0,18,32,354,140,32);mobile(2,1,18,196,354,290);mobile(2,2,18,502,169,160);mobile(2,3,203,502,169,160);
+ for(let i=4;i<home.sections[2].children.length;i++)mobile(2,i,18,0,100,100);
+ mobile(3,0,18,24,86,70);mobile(3,1,286,24,86,70);mobile(3,2,18,310,100,70);mobile(3,3,286,310,86,70);mobile(3,4,70,128,250,130,32);
+ mobile(4,0,18,24,354,230);for(let i=1;i<15;i++)mobile(4,i,18+(i-1)%2*185,270+Math.floor((i-1)/2)*150,169,134);
+ mobile(5,0,18,32,354,155,38);mobile(5,1,18,220,354,250);mobile(5,2,18,486,169,140);mobile(5,3,203,486,169,140);mobile(5,4,18,0,100,100);
+ mobile(6,0,18,32,354,110,48);for(let i=1;i<=6;i++)mobile(6,i,18+(i-1)%2*185,166+Math.floor((i-1)/2)*150,169,134);mobile(6,7,18,640,354,70,18);
+ mobile(7,0,24,60,342,200,50);mobile(7,1,24,320,342,144,18);
+
  return home;
 }
 export function upgradeLegacyDocument(document:Document){
