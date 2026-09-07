@@ -10,7 +10,8 @@
 .v2-public-nav{color:#fff}
 .v2-public-nav>.v2-nav-brand,.v2-public-nav>nav{mix-blend-mode:difference}
 .v2-nav-glow-clip{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:0}
-.v2-nav-glow{position:absolute;top:-70px;left:-140px;width:280px;height:140px;pointer-events:none;background:radial-gradient(ellipse at 45% 60%,rgba(255,255,245,.45),rgba(200,228,255,.2) 20%,rgba(110,170,255,.12) 34%,transparent 66%),radial-gradient(ellipse at 60% 70%,rgba(255,192,110,.25),transparent 50%);filter:blur(8px)}
+.v2-nav-glow-position{position:absolute;top:0;left:0;pointer-events:none}
+.v2-nav-glow{position:absolute;top:-70px;left:-140px;width:280px;height:140px;pointer-events:none;background:radial-gradient(ellipse at 45% 60%,rgba(255,255,245,.45),rgba(200,228,255,.2) 20%,rgba(110,170,255,.12) 34%,transparent 66%),radial-gradient(ellipse at 60% 70%,rgba(255,192,110,.25),transparent 50%);filter:blur(100px)}
 .v2-public-nav>.v2-nav-brand,.v2-public-nav>nav,.v2-public-nav>.v2-nav-action{position:relative;z-index:1;text-shadow:none}
 @media(hover:none),(prefers-reduced-motion:reduce){.v2-nav-glow-clip{display:none}}
 .v2-public-nav a{color:inherit;text-decoration:none}
